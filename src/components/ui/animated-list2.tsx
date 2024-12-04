@@ -114,7 +114,7 @@ export function AnimatedListItem({ children }: { children: React.ReactNode }) {
         onClick={() => setIsOpen(true)}
         style={{ cursor: 'pointer' }}
       >
-        <div className="w-full p-4 bg-white rounded-lg shadow-md flex items-center justify-between">
+        <div className="w-full p-4 bg-white rounded-lg shadow-md flex items-start justify-between">
           <div className="flex items-center flex-1">
             <div
               className="flex size-10 items-center justify-center rounded-2xl mr-3"
@@ -124,19 +124,19 @@ export function AnimatedListItem({ children }: { children: React.ReactNode }) {
             >
               <span className="text-lg">{(children as React.ReactElement)?.props?.icon || '🎁'}</span>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="text-lg font-bold text-primary">
-              <span className="text-primary-red font-extrabold">{(children as React.ReactElement)?.props?.fromAddress}</span> is giving <span className="text-primary-red font-extrabold">{(children as React.ReactElement)?.props?.giftName}</span>
+                <span className="text-primary-red font-extrabold">{(children as React.ReactElement)?.props?.fromAddress}</span> is giving <span className="text-primary-red font-extrabold">{(children as React.ReactElement)?.props?.giftName}</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 to {(children as React.ReactElement)?.props?.toAddress}
               </div>
             </div>
           </div>
-          <div className="flex-shrink-0 ml-4">
-            <div className="relative inline-block">
-              <div className="bg-red-500 text-white px-4 py-2 rounded-lg transform rotate-3 shadow-lg">
-                <span className="text-sm">worth </span>
+          <div className="flex-shrink-0 ml-4 max-w-[120px] sm:max-w-none">
+            <div className="relative">
+              <div className="bg-red-500 text-white px-3 py-1.5 rounded-lg transform rotate-3 shadow-lg break-words">
+                <span className="text-sm block sm:inline">worth </span>
                 <span className="font-bold">{(children as React.ReactElement)?.props?.value}</span>
               </div>
             </div>
