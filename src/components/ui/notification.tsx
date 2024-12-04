@@ -45,7 +45,7 @@ export const notifications: NotificationItem[] = [
     color: "#FFB800",
   },
   {
-    fromAddress: "anonii.base.eth",
+    fromAddress: "0xa888888888888888888",
     toAddress: "caveman.base.eth",
     giftName: "WAGMI Bundle",
     value: "$777.77",
@@ -56,7 +56,7 @@ export const notifications: NotificationItem[] = [
   {
     fromAddress: "daddy.base.eth",
     toAddress: "babes.base.eth",
-    giftName: "Expensive Stuffs",
+    giftName: "Expensive Shit",
     value: "$11300.69",
     time: "13m ago",
     icon: "🎁",

@@ -2,10 +2,12 @@
 import { motion } from 'framer-motion';
 import { MovingBorder } from "@/components/ui/moving-border";
 import { AnimatedList } from "@/components/ui/animated-list";
+import { AnimatedList as AnimatedList2 } from "@/components/ui/animated-list2";
 import { StatsLists } from "@/components/ui/stats-lists";
 import { cn } from "@/lib/utils";
 import { Notification, notifications } from "@/components/ui/notification";
 import { useState, useEffect } from 'react';
+import { GiftPopup } from "@/components/ui/gift-popup";
 
 const titles = [
   { text: 'ギフト\nミーム', language: 'Japanese' },
@@ -22,6 +24,7 @@ const titles = [
 
 export default function Home() {
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
+  const [isGiftPopupOpen, setIsGiftPopupOpen] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -64,18 +67,32 @@ export default function Home() {
             containerClassName="mt-8 mb-16"
             borderClassName="bg-gradient-to-r from-primary-red/50 to-primary-red/20"
             className="bg-off-white text-gray-800 hover:text-primary-red/80"
+            onClick={() => setIsGiftPopupOpen(true)}
           >
             START GIVING →
           </MovingBorder>
-         
+          <GiftPopup 
+            isOpen={isGiftPopupOpen}
+            onClose={() => setIsGiftPopupOpen(false)}
+          />
         </motion.div>
-        <AnimatedList className="mb-16" delay={4000}>
+
+        <AnimatedList2 className="mb-16" delay={4000}>
+          {notifications.map((item, idx) => (
+            <Notification {...item} key={`notification2-${idx}`} />
+          ))}
+        </AnimatedList2>
+
+        {//different design
+        /* <AnimatedList className="mb-16" delay={4000}>
           {notifications.map((item, idx) => (
             <Notification {...item} key={`notification-${idx}`} />
           ))}
-        </AnimatedList>
+        </AnimatedList> */}
 
-        <StatsLists className="mb-16" />
+        <StatsLists className="mt-32 mb-16" />
+
+        <div className="hero-title" style={{ fontSize: '5vw' }} > What's this?</div>
 
         {/* Features Grid */}
         <div className="features-grid">
@@ -121,7 +138,7 @@ export default function Home() {
           className="cta-section"
         >
           <button className="cta-button">
-            Get Started Now
+            oh, hi mark
           </button>
         </motion.div>
       </div>
