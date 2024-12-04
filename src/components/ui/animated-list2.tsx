@@ -125,11 +125,13 @@ export function AnimatedListItem({ children }: { children: React.ReactNode }) {
               <span className="text-lg">{(children as React.ReactElement)?.props?.icon || '🎁'}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-lg font-bold text-primary">
-                <span className="text-primary-red font-extrabold">{(children as React.ReactElement)?.props?.fromAddress}</span> is giving <span className="text-primary-red font-extrabold">{(children as React.ReactElement)?.props?.giftName}</span>
+              <div className="text-lg font-bold text-primary overflow-hidden">
+                <span className="text-primary-red font-extrabold inline-block max-w-[150px] sm:max-w-[200px] truncate align-bottom">{(children as React.ReactElement)?.props?.fromAddress}</span>
+                <span className="inline-block mx-2">is giving</span>
+                <span className="text-primary-red font-extrabold inline-block max-w-[150px] sm:max-w-[200px] truncate align-bottom">{(children as React.ReactElement)?.props?.giftName}</span>
               </div>
-              <div className="text-xs text-muted-foreground">
-                to {(children as React.ReactElement)?.props?.toAddress}
+              <div className="text-xs text-muted-foreground truncate">
+                to <span className="inline-block max-w-[200px] truncate align-bottom">{(children as React.ReactElement)?.props?.toAddress}</span>
               </div>
             </div>
           </div>
