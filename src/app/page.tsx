@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Notification, notifications } from "@/components/ui/notification";
 import { useState, useEffect } from 'react';
 import { GiftPopup } from "@/components/ui/gift-popup";
+import { CoolMode } from "@/components/ui/cool-mode";
 
 const titles = [
   { text: 'ギフト\nミーム', language: 'Japanese' },
@@ -38,57 +39,81 @@ export default function Home() {
     <main className="main-container">
       <div className="content-wrapper">
         {/* Hero Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="hero-section"
-        >
-          <motion.h1 
-            className="hero-title"
-            key={currentTitleIndex}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+        <div className="center justify-center mt-16 mb-8">
+          <CoolMode
+            options={{
+              particles: [
+                {
+                  url: "https://www.researchgate.net/publication/359456368/figure/fig1/AS:11431281103138195@1669617009814/A-blank-doge-meme-template_Q320.jpg",
+                  speedHorz: 4,
+                  speedUp: 8,
+                  size: 40,
+                },
+                {
+                  url: "https://img.cryptorank.io/coins/degen_base1708601253411.png", //degen
+                  speedHorz: -2,
+                  speedUp: 10,
+                  size: 35,
+                },
+                {
+                  url: "https://s3.coinmarketcap.com/static-gravity/image/86054f13412b45a2acdff174c2fc5422.jpg", //toshi
+                  speedHorz: 3,
+                  speedUp: 1,
+                  size: 45,
+                }
+              ],
+              particleCount: 15
+            }}
           >
-            {titles[currentTitleIndex].text.split('\n').map((line, i) => (
-              <span key={i}>
-                {line}
-                {i === 0 && <br />}
-              </span>
-            ))}
-          </motion.h1>
-          <p className="hero-subtitle">
-            Bundle • Buy • Gift Your Favorite Memecoins
-          </p>
-          <MovingBorder
-            duration={2000}
-            containerClassName="mt-8 mb-16"
-            borderClassName="bg-gradient-to-r from-primary-red/50 to-primary-red/20"
-            className="bg-off-white text-gray-800 hover:text-primary-red/80"
-            onClick={() => setIsGiftPopupOpen(true)}
-          >
-            START GIVING →
-          </MovingBorder>
-          <GiftPopup 
-            isOpen={isGiftPopupOpen}
-            onClose={() => setIsGiftPopupOpen(false)}
-          />
-        </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="hero-section"
+            >
+              <motion.h1 
+                className="hero-title"
+                key={currentTitleIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+              >
+                {titles[currentTitleIndex].text.split('\n').map((line, i) => (
+                  <span key={i}>
+                    {line}
+                    {i === 0 && <br />}
+                  </span>
+                ))}
+              </motion.h1>
+              <p className="hero-subtitle">
+                Bundle • Buy • Gift Your Favorite Memecoins
+              </p>
+              <MovingBorder
+                duration={2000}
+                containerClassName="mt-8"
+                borderClassName="bg-gradient-to-r from-primary-red/50 to-primary-red/20"
+                className="bg-off-white text-gray-800 hover:text-primary-red/80"
+                onClick={() => setIsGiftPopupOpen(true)}
+              >
+                START GIVING →
+              </MovingBorder>
+            </motion.div>
+          </CoolMode>
+        </div>
+
+        
+
+        <GiftPopup 
+          isOpen={isGiftPopupOpen}
+          onClose={() => setIsGiftPopupOpen(false)}
+        />
 
         <AnimatedList2 className="mb-16" delay={4000}>
           {notifications.map((item, idx) => (
             <Notification {...item} key={`notification2-${idx}`} />
           ))}
         </AnimatedList2>
-
-        {//different design
-        /* <AnimatedList className="mb-16" delay={4000}>
-          {notifications.map((item, idx) => (
-            <Notification {...item} key={`notification-${idx}`} />
-          ))}
-        </AnimatedList> */}
 
         <StatsLists className="mt-32 mb-16" />
 
