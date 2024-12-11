@@ -21,6 +21,8 @@
     "autoprefixer": "latest",
     "class-variance-authority": "latest",
     "clsx": "^2.1.1",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.4",
     "framer-motion": "^11.13.1",
     "geist": "latest",
     "next": "latest",

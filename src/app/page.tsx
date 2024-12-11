@@ -10,6 +10,9 @@ import { useState, useEffect } from 'react';
 import { GiftPopup } from "@/components/ui/gift-popup";
 import { CoolMode } from "@/components/ui/cool-mode";
 
+import * as dotenv from 'dotenv';
+dotenv.config({ path: './.env' });
+
 const titles = [
   { text: 'ギフト\nミーム', language: 'Japanese' },
   { text: 'Gift\nMeme', language: 'English' },

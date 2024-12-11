@@ -1,35 +1,51 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MovingBorder } from "./moving-border";
+import { searchTokens, TokenData } from '@/services/token-service';
 
 interface CoinSelection {
+  address: string;
   name: string;
+  symbol: string;
   amount: string;
+  price: number;
 }
 
 export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCoins, setSelectedCoins] = useState<CoinSelection[]>([]);
   const [receiverAddress, setReceiverAddress] = useState('');
+  const [availableTokens, setAvailableTokens] = useState<TokenData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Mock data - to be replaced with actual database
-  const mockCoins = [
-    'PEPE',
-    'WOJAK',
-    'DOGE',
-    'SHIB',
-    'FLOKI'
-  ];
+  useEffect(() => {
+    const fetchTokens = async () => {
+      if (searchQuery.length > 2) {
+        setIsLoading(true);
+        const tokens = await searchTokens(searchQuery);
+        setAvailableTokens(tokens);
+        setIsLoading(false);
+      } else {
+        setAvailableTokens([]);
+      }
+    };
 
-  const filteredCoins = mockCoins.filter(coin => 
-    coin.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    const debounceTimeout = setTimeout(fetchTokens, 500);
+    return () => clearTimeout(debounceTimeout);
+  }, [searchQuery]);
 
-  const handleCoinSelect = (coinName: string) => {
-    if (!selectedCoins.find(coin => coin.name === coinName)) {
-      setSelectedCoins([...selectedCoins, { name: coinName, amount: '' }]);
+  const handleCoinSelect = (token: TokenData) => {
+    if (!selectedCoins.find(coin => coin.address === token.address)) {
+      setSelectedCoins([...selectedCoins, {
+        address: token.address,
+        name: token.name,
+        symbol: token.symbol,
+        amount: '',
+        price: token.price_usd
+      }]);
     }
     setSearchQuery('');
+    setAvailableTokens([]);
   };
 
   const handleAmountChange = (index: number, amount: string) => {
@@ -42,12 +58,11 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     setSelectedCoins(selectedCoins.filter((_, i) => i !== index));
   };
 
-  // Mock total calculation - to be replaced with actual conversion
   const calculateTotal = () => {
     const total = selectedCoins.reduce((acc, coin) => {
-      return acc + (parseFloat(coin.amount) || 0);
+      return acc + (parseFloat(coin.amount) || 0) * coin.price;
     }, 0);
-    return (total * 0.0001).toFixed(6); // Mock conversion to ETH
+    return total.toFixed(6);
   };
 
   if (!isOpen) return null;
@@ -66,7 +81,7 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         <div className="mb-6">
           <input
             type="text"
-            placeholder="Search memecoin..."
+            placeholder="Search token..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
@@ -75,15 +90,44 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           {/* Dropdown for search results */}
           {searchQuery && (
             <div className="absolute bg-white border rounded-lg mt-1 max-h-40 overflow-y-auto w-[calc(100%-3rem)]">
-              {filteredCoins.map((coin) => (
+              {availableTokens.map((token) => (
                 <div
-                  key={coin}
-                  onClick={() => handleCoinSelect(coin)}
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  key={token.address}
+                  onClick={() => handleCoinSelect(token)}
+                  className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                 >
-                  {coin}
+                  {token.logo_url && (
+                    <img 
+                      src={token.logo_url} 
+                      alt={token.symbol}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  )}
+                  <div className="flex-grow">
+                    <div>{token.name} ({token.symbol})</div>
+                    <div className="text-sm text-gray-500">
+                      ${token.price_usd.toFixed(6)}
+                    </div>
+                  </div>
+                  <div className="text-xs px-2 py-1 rounded" style={{
+                    backgroundColor: token.source === 'uniswap' ? 'rgb(232, 0, 111, 0.1)' : 
+                                   token.source === 'wow' ? 'rgba(130, 71, 229, 0.1)' : 
+                                   'rgb(229, 71, 71, 0.1)',
+                    color: token.source === 'uniswap' ? 'rgb(232, 0, 111)' : 
+                           token.source === 'wow' ? 'rgb(130, 71, 229)' : 
+                           'rgb(229, 71, 71)'
+                  }}>
+                    {token.source === 'uniswap' ? 'Uniswap' : 
+                     token.source === 'wow' ? 'wow.xyz' : 
+                     'Unlisted'}
+                  </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="p-2 text-gray-500">
+                  Loading...
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -92,7 +136,7 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         <div className="mb-6 max-h-48 overflow-y-auto">
           {selectedCoins.map((coin, index) => (
             <div key={index} className="flex items-center gap-4 mb-2">
-              <span className="font-medium">{coin.name}</span>
+              <span className="font-medium">{coin.name} ({coin.symbol})</span>
               <input
                 type="number"
                 placeholder="Amount"
@@ -110,10 +154,10 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           ))}
         </div>
 
-        {/* Total in ETH */}
+        {/* Total */}
         <div className="mb-6">
           <p className="text-lg font-medium">
-            Total: {calculateTotal()} ETH
+            Total: {calculateTotal()}
           </p>
         </div>
 
@@ -135,7 +179,7 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           borderClassName="bg-gradient-to-r from-primary-red/50 to-primary-red/20"
           className="w-full bg-off-white text-gray-800 hover:text-primary-red/80"
         >
-          Gift Meme!
+          Gift Token!
         </MovingBorder>
       </div>
     </div>
