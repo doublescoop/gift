@@ -1,9 +1,6 @@
 import axios from 'axios';
-import { ethers } from 'ethers';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { ethers, EventLog } from 'ethers';
 
-const GRAPH_API_URL = `https://gateway.thegraph.com/api/${process.env.GRAPH_API_KEY}/subgraphs/id/D31gzGUtVNhHNdnxeELUBdch5rzDRm5cddvae9GzhCLu`;
 const BASE_RPC_URL = 'https://mainnet.base.org';
 
 // wow.xyz contract on Base
@@ -44,7 +41,7 @@ export interface TokenData {
 async function getEthPrice(): Promise<number> {
   try {
     const response = await axios.post(
-      GRAPH_API_URL,
+      `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_GRAPH_API_KEY}/subgraphs/id/D31gzGUtVNhHNdnxeELUBdch5rzDRm5cddvae9GzhCLu}`,
       {
         query: `
           query {
@@ -64,51 +61,15 @@ async function getEthPrice(): Promise<number> {
 
 async function searchUniswapTokens(searchQuery: string): Promise<TokenData[]> {
   try {
-    const query = `
-      query SearchTokens($searchQuery: String!) {
-        tokens(
-          first: 10,
-          where: {
-            or: [
-              { name_contains_nocase: $searchQuery },
-              { symbol_contains_nocase: $searchQuery }
-            ]
-          }
-        ) {
-          id
-          name
-          symbol
-          decimals
-          derivedETH
-        }
-      }
-    `;
-
-    const [response, ethPriceUSD] = await Promise.all([
-      axios.post(GRAPH_API_URL, {
-        query,
-        variables: { searchQuery }
-      }),
-      getEthPrice()
-    ]);
-
-    if (response.data.errors) {
-      throw new Error(`Graph API error: ${JSON.stringify(response.data.errors)}`);
-    }
+    const response = await fetch(`/api/tokens?query=${encodeURIComponent(searchQuery)}`);
+    const data = await response.json();
     
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch tokens');
+    }
 
-    return response.data.data.tokens.map((token: any) => ({
-      address: token.id,
-      name: token.name,
-      symbol: token.symbol,
-      decimals: parseInt(token.decimals),
-      price_usd: parseFloat(token.derivedETH) * ethPriceUSD,
-      logo_url: `https://raw.githubusercontent.com/Uniswap/assets/master/blockchains/base/assets/${token.id}/logo.png`,
-      source: 'uniswap'
-    }));
+    return data.tokens;
   } catch (error) {
-    console.log('api:',process.env.GRAPH_API_KEY)
-    console.log('Environment Variables:', process.env)
     console.error('Error fetching Uniswap tokens:', error);
     return [];
   }
@@ -163,6 +124,7 @@ async function searchWowTokens(
     const searchQueryLower = searchQuery.toLowerCase();
     
     for (const event of events) {
+      if (!(event instanceof ethers.EventLog)) continue;
       const { tokenAddress, name, symbol } = event.args;
       
       // Skip if we already processed this token

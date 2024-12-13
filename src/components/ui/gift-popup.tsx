@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { MovingBorder } from "./moving-border";
 import { searchTokens, TokenData } from '@/services/token-service';
+import { useAccount, useBalance } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
 
 interface CoinSelection {
   address: string;
@@ -11,7 +13,19 @@ interface CoinSelection {
   price: number;
 }
 
+const popularTokens = [
+  { address: '0x123...', name: 'PEPE', symbol: 'PEPE', price: 0.000001 },
+  { address: '0x456...', name: 'DEGEN', symbol: 'DEGEN', price: 0.05 },
+  { address: '0x789...', name: 'WOJAK', symbol: 'WOJAK', price: 0.002 },
+];
+
 export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const { open } = useAppKit();
+  const { address, isConnected } = useAccount();
+  const { data: ethBalance } = useBalance({
+    address: address,
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCoins, setSelectedCoins] = useState<CoinSelection[]>([]);
   const [receiverAddress, setReceiverAddress] = useState('');
@@ -60,9 +74,18 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
   const calculateTotal = () => {
     const total = selectedCoins.reduce((acc, coin) => {
-      return acc + (parseFloat(coin.amount) || 0) * coin.price;
+      const amount = parseFloat(coin.amount) || 0;
+      const price = coin.price || 0;
+      const value = amount * price;
+      console.log(`Calculating for ${coin.symbol}: Amount=${amount}, Price=${price}, Value=${value}`);
+      return acc + value;
     }, 0);
-    return total.toFixed(6);
+    return total.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    });
   };
 
   if (!isOpen) return null;
@@ -76,111 +99,126 @@ export const GiftPopup = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         >
           ×
         </button>
-        
-        {/* Search Bar */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search token..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
-          />
-          
-          {/* Dropdown for search results */}
-          {searchQuery && (
-            <div className="absolute bg-white border rounded-lg mt-1 max-h-40 overflow-y-auto w-[calc(100%-3rem)]">
-              {availableTokens.map((token) => (
-                <div
+
+        <div className="space-y-6">
+          {/* Section 1: Gift what you have */}
+          <div className="border rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4">Gift what you have</h3>
+            {!isConnected ? (
+              <button
+                onClick={() => open()}
+                className="w-full py-2 px-4 bg-primary-red text-white rounded-lg hover:bg-red-600"
+              >
+                Connect Wallet
+              </button>
+            ) : (
+              <div className="space-y-2">
+                {ethBalance && (
+                  <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span>ETH</span>
+                    <span>{parseFloat(ethBalance.formatted).toFixed(4)} ETH</span>
+                  </div>
+                )}
+                {/* Add other token balances here */}
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Popular Meme Tokens */}
+          <div className="border rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4">Choose Popular Memes</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {popularTokens.map((token) => (
+                <button
                   key={token.address}
                   onClick={() => handleCoinSelect(token)}
-                  className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                  className="p-2 border rounded-lg hover:bg-gray-50 text-left"
                 >
-                  {token.logo_url && (
-                    <img 
-                      src={token.logo_url} 
-                      alt={token.symbol}
-                      className="w-6 h-6 rounded-full"
-                    />
-                  )}
-                  <div className="flex-grow">
-                    <div>{token.name} ({token.symbol})</div>
-                    <div className="text-sm text-gray-500">
-                      ${token.price_usd.toFixed(6)}
-                    </div>
-                  </div>
-                  <div className="text-xs px-2 py-1 rounded" style={{
-                    backgroundColor: token.source === 'uniswap' ? 'rgb(232, 0, 111, 0.1)' : 
-                                   token.source === 'wow' ? 'rgba(130, 71, 229, 0.1)' : 
-                                   'rgb(229, 71, 71, 0.1)',
-                    color: token.source === 'uniswap' ? 'rgb(232, 0, 111)' : 
-                           token.source === 'wow' ? 'rgb(130, 71, 229)' : 
-                           'rgb(229, 71, 71)'
-                  }}>
-                    {token.source === 'uniswap' ? 'Uniswap' : 
-                     token.source === 'wow' ? 'wow.xyz' : 
-                     'Unlisted'}
-                  </div>
-                </div>
+                  <div className="font-medium">{token.symbol}</div>
+                  <div className="text-sm text-gray-500">${token.price.toFixed(6)}</div>
+                </button>
               ))}
-              {isLoading && (
-                <div className="p-2 text-gray-500">
-                  Loading...
-                </div>
-              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Selected Coins List */}
-        <div className="mb-6 max-h-48 overflow-y-auto">
-          {selectedCoins.map((coin, index) => (
-            <div key={index} className="flex items-center gap-4 mb-2">
-              <span className="font-medium">{coin.name} ({coin.symbol})</span>
-              <input
-                type="number"
-                placeholder="Amount"
-                value={coin.amount}
-                onChange={(e) => handleAmountChange(index, e.target.value)}
-                className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
-              />
-              <button
-                onClick={() => removeCoin(index)}
-                className="text-red-500 hover:text-red-700"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
+          {/* Section 3: Search Bar */}
+          <div className="border rounded-lg p-4">
+            <h3 className="text-lg font-semibold mb-4">Search Tokens</h3>
+            <input
+              type="text"
+              placeholder="Search token..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
+            />
+            
+            {/* Dropdown for search results */}
+            {searchQuery && availableTokens.length > 0 && (
+              <div className="absolute bg-white border rounded-lg mt-1 max-h-40 overflow-y-auto w-[calc(100%-3rem)]">
+                {availableTokens.map((token) => (
+                  <div
+                    key={token.address}
+                    className="p-2 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleCoinSelect(token)}
+                  >
+                    <div className="font-medium">{token.symbol}</div>
+                    <div className="text-sm text-gray-500">${token.price_usd.toFixed(6)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Total */}
-        <div className="mb-6">
-          <p className="text-lg font-medium">
-            Total: {calculateTotal()}
-          </p>
-        </div>
+          {/* Selected Coins List */}
+          <div className="mb-6 max-h-48 overflow-y-auto">
+            {selectedCoins.map((coin, index) => (
+              <div key={index} className="flex items-center gap-4 mb-2">
+                <span className="font-medium">{coin.name} ({coin.symbol})</span>
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={coin.amount}
+                  onChange={(e) => handleAmountChange(index, e.target.value)}
+                  className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
+                />
+                <button
+                  onClick={() => removeCoin(index)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
 
-        {/* Receiver Address */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Receiver's Address"
-            value={receiverAddress}
-            onChange={(e) => setReceiverAddress(e.target.value)}
-            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
-          />
-        </div>
+          {/* Total */}
+          <div className="mb-6">
+            <p className="text-lg font-medium">
+              Total: {calculateTotal()}
+            </p>
+          </div>
 
-        {/* Gift Button */}
-        <MovingBorder
-          duration={2000}
-          containerClassName="w-full"
-          borderClassName="bg-gradient-to-r from-primary-red/50 to-primary-red/20"
-          className="w-full bg-off-white text-gray-800 hover:text-primary-red/80"
-        >
-          Gift Token!
-        </MovingBorder>
+          {/* Receiver Address */}
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Receiver's Address"
+              value={receiverAddress}
+              onChange={(e) => setReceiverAddress(e.target.value)}
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-red"
+            />
+          </div>
+
+          {/* Gift Button */}
+          <MovingBorder
+            duration={2000}
+            containerClassName="w-full"
+            borderClassName="bg-gradient-to-r from-primary-red/50 to-primary-red/20"
+            className="w-full bg-off-white text-gray-800 hover:text-primary-red/80"
+          >
+            Gift Token!
+          </MovingBorder>
+        </div>
       </div>
     </div>
   );

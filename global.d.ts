@@ -3,4 +3,3 @@ declare namespace NodeJS {
       GRAPH_API_KEY: string;
     }
   }
-  
